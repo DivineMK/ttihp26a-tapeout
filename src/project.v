@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Uri Shaked
+ * Copyright (c) 2025 Khanh Lo
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -36,9 +36,7 @@ module tt_um_lkhanh_vga_trng (
   // Suppress unused signals warning
   wire _unused_ok = &{ena, ui_in, uio_in};
 
-  reg [9:0] counter;
-
-  hvsync_generator hvsync_gen (
+  hvsync_generator i_hvsync_gen (
       .clk(clk),
       .reset(~rst_n),
       .hsync(hsync),
@@ -48,21 +46,99 @@ module tt_um_lkhanh_vga_trng (
       .vpos(pix_y)
   );
 
-  wire [9:0] moving_x = pix_x + counter;
+  // always @(*) begin
+  //   case (ui_in[3:2])
+  //     2'd0: begin
+  //       R = i_vga_stripe.R;
+  //       G = i_vga_stripe.G;
+  //       B = i_vga_stripe.B;
+  //     end
+  //     2'd1: begin
+  //       R = i_vga_gamepad.R;
+  //       G = i_vga_gamepad.G;
+  //       B = i_vga_gamepad.B;
+  //     end
+  //     2'd2: begin
+  //       R = i_vga_checker.R;
+  //       G = i_vga_checker.G;
+  //       B = i_vga_checker.B;
+  //     end
+  //     2'd3: begin
+  //       R = i_vga_ring.R;
+  //       G = i_vga_ring.G;
+  //       B = i_vga_ring.B;
+  //     end
+  //     default: begin
+  //       R = i_vga_stripe.R;
+  //       G = i_vga_stripe.G;
+  //       B = i_vga_stripe.B;
+  //     end
+  //   endcase
+  // end
 
-  assign R = video_active ? {moving_x[5], pix_y[2]} : 2'b00;
-  assign G = video_active ? {moving_x[6], pix_y[2]} : 2'b00;
-  assign B = video_active ? {moving_x[7], pix_y[5]} : 2'b00;
+  wire [1:0] sel = ui_in[3:2];
+  assign R = (sel == 2'd0) ? i_vga_stripe.R : 
+             (sel == 2'd1) ? i_vga_gamepad.R :
+             (sel == 2'd2) ? i_vga_checker.R : 
+             i_vga_ring.R;
+  assign G = (sel == 2'd0) ? i_vga_stripe.G : 
+             (sel == 2'd1) ? i_vga_gamepad.G :
+             (sel == 2'd2) ? i_vga_checker.G : 
+             i_vga_ring.R;
+  assign B = (sel == 2'd0) ? i_vga_stripe.B : 
+             (sel == 2'd1) ? i_vga_gamepad.B :
+             (sel == 2'd2) ? i_vga_checker.B : 
+             i_vga_ring.B;
 
-  always @(posedge vsync, negedge rst_n) begin
-    if (~rst_n) begin
-      counter <= 0;
-    end else begin
-      counter <= counter - 1;
-    end
-  end
+  vga_checker i_vga_checker (
+      .ui_in,
+      .pix_x,
+      .pix_y,
 
-  // Suppress unused signals warning
-  wire _unused_ok_ = &{moving_x, pix_y};
+      .rst_n,
+      .video_active,
+      .vsync,
+      .R(),
+      .G(),
+      .B()
+  );
+
+  vga_ring i_vga_ring (
+      .ui_in(ui_in[1:0]),
+      .pix_x,
+      .pix_y,
+
+      .clk,
+      .rst_n,
+      .video_active,
+      .R(),
+      .G(),
+      .B()
+  );
+
+  vga_stripe i_vga_stripe (
+      .ui_in(ui_in[1:0]),
+      .pix_x,
+      .pix_y,
+
+      .rst_n,
+      .video_active,
+      .vsync,
+      .R(),
+      .G(),
+      .B()
+  );
+
+  vga_gamepad i_vga_gamepad (
+      .pix_x,
+      .pix_y,
+
+      .clk,
+      .rst_n,
+      .video_active,
+      .R(),
+      .G(),
+      .B()
+  );
 
 endmodule

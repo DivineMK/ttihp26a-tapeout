@@ -10,8 +10,12 @@
 
 module vga_ring (
     input wire [1:0] ui_in,
-    input wire pix_x,
-    input wire pix_y,
+    input wire clk,
+    input wire rst_n,
+
+    input wire [9:0] pix_x,
+    input wire [9:0] pix_y,
+    input wire video_active,
 
     output wire [1:0] R,
     output wire [1:0] G,
@@ -26,8 +30,8 @@ module vga_ring (
   wire direction = ui_in[1];  // 0=outward, 1=inward
 
   // Centered coordinates (signed)
-  wire signed [10:0] cx = $signed({1'b0, hpos}) - 11'sd320;
-  wire signed [10:0] cy = $signed({1'b0, vpos}) - 11'sd240;
+  wire signed [10:0] cx = $signed({1'b0, pix_x}) - 11'sd320;
+  wire signed [10:0] cy = $signed({1'b0, pix_y}) - 11'sd240;
 
   // Absolute values
   wire [9:0] abs_x = cx[10] ? (~cx[9:0] + 1'b1) : cx[9:0];
@@ -43,16 +47,16 @@ module vga_ring (
   wire [7:0] anim_radius = direction ? (radius[7:0] - anim_offset) : (radius[7:0] + anim_offset);
 
   // Final color outputs (hypnotic concentric rings)
-  wire [1:0] r_out = anim_radius[5:4] & {2{display_on}};
-  wire [1:0] g_out = anim_radius[6:5] & {2{display_on}};
-  wire [1:0] b_out = anim_radius[7:6] & {2{display_on}};
+  assign R = anim_radius[5:4] & {2{video_active}};
+  assign G = anim_radius[6:5] & {2{video_active}};
+  assign B = anim_radius[7:6] & {2{video_active}};
 
   // Frame counter for animation with variable speed
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       frame <= 0;
     end else begin
-      if (hpos == 0 && vpos == 0) frame <= frame + (speed ? 10'd2 : 10'd1);
+      if (pix_x == 0 && pix_y == 0) frame <= frame + (speed ? 10'd2 : 10'd1);
     end
   end
 

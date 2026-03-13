@@ -6,8 +6,12 @@
 `default_nettype none
 
 module vga_gamepad (
-    input wire pix_x,
-    input wire pix_y,
+    input wire [9:0] pix_x,
+    input wire [9:0] pix_y,
+
+    input wire clk,
+    input wire rst_n,
+    input wire video_active,
 
     output wire [1:0] R,
     output wire [1:0] G,
@@ -173,17 +177,21 @@ module vga_gamepad (
   wire any_active = left_act | right_act | up_act | down_act | a_act | b_act |
                    x_act | y_act | l_act | r_act | sel_act | strt_act;
 
+  reg [1:0] r_out;
+  reg [1:0] g_out;
+  reg [1:0] b_out;
+  assign {R, G, B} = {r_out, g_out, b_out};
   // RGB output logic
   always @(posedge clk) begin
     if (~rst_n) begin
-      R <= 0;
-      G <= 0;
-      B <= 0;
+      r_out <= 0;
+      g_out <= 0;
+      b_out <= 0;
     end else begin
       if (video_active) begin
-        {R, G, B} <= any_active ? WHITE : BLACK;
+        {r_out, g_out, b_out} <= any_active ? WHITE : BLACK;
       end else begin
-        {R, G, B} <= 0;
+        {r_out, g_out, b_out} <= 0;
       end
     end
   end
