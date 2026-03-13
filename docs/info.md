@@ -9,12 +9,12 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+Use TRNG to select between 4 VGA projects
 
 ## How to test
 
-Explain how to use your project
+Try changing speed, direction and select between different VGA projects.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+Need VGA PMOD compatible with TinyVGA.
