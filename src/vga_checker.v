@@ -22,8 +22,8 @@ module vga_checker (
   // increase counter every frame (vsync happens once per frame)
   reg [9:0] counter;
 
-  reg [1:0] speed;
-  assign speed = ui_in[0] ? 2'd3 : 1'd0;
+  wire [1:0] speed;
+  assign speed = ui_in[0] ? 2'd3 : 2'd0;
   wire direction = ui_in[1];
 
   always @(posedge vsync, negedge rst_n) begin

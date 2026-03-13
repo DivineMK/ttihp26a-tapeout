@@ -27,7 +27,7 @@ module vga_stripe (
   assign B = video_active ? {moving_x[7], pix_y[5]} : 2'b00;
 
   wire direction = ui_in[1];
-  reg [1:0] speed;
+  wire [1:0] speed;
   assign speed = ui_in[0] ? 2'd3 : 2'd1;
 
   always @(posedge vsync, negedge rst_n) begin

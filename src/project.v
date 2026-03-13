@@ -46,14 +46,42 @@ module tt_um_lkhanh_vga_trng (
       .vpos(pix_y)
   );
 
+  // RGB channels from different modules
   wire [1:0] r_stripe, g_stripe, b_stripe;
   wire [1:0] r_gamepad, g_gamepad, b_gamepad;
   wire [1:0] r_checker, g_checker, b_checker;
   wire [1:0] r_ring, g_ring, b_ring;
 
-  wire [1:0] sel = ui_in[3:2];
   reg [1:0] r_o, g_o, b_o;
   assign {R, G, B} = {r_o, g_o, b_o};
+
+  // random selection
+  wire [1:0] ro_o;
+  reg [1:0] ro_sample;
+
+  wire rand_d = ui_in[7];
+  reg rand_q;
+
+  reg [1:0] rand_sel;
+  wire [1:0] sel = rand_q ? rand_sel : ui_in[3:2];
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      ro_sample[0] <= 1'b0;
+      ro_sample[1] <= 1'b0;
+      rand_sel <= 2'b00;
+      rand_q <= 1'b0;
+    end else begin
+      ro_sample[0] <= ro_o[0];
+      ro_sample[1] <= ro_o[1];
+      rand_q <= rand_d;
+
+      // Sample on rising edge of ui_in[7]
+      if (rand_q && !rand_d) begin
+          rand_sel <= rand_sel + ro_sample;
+      end
+    end
+  end
 
   always @(*) begin
     case (sel)
@@ -84,18 +112,6 @@ module tt_um_lkhanh_vga_trng (
       end
     endcase
   end
-  // assign R = (sel == 2'd0) ? i_vga_stripe.R :
-  //            (sel == 2'd1) ? i_vga_gamepad.R :
-  //            (sel == 2'd2) ? i_vga_checker.R : 
-  //            i_vga_ring.R;
-  // assign G = (sel == 2'd0) ? i_vga_stripe.G :
-  //            (sel == 2'd1) ? i_vga_gamepad.G :
-  //            (sel == 2'd2) ? i_vga_checker.G : 
-  //            i_vga_ring.G;
-  // assign B = (sel == 2'd0) ? i_vga_stripe.B :
-  //            (sel == 2'd1) ? i_vga_gamepad.B :
-  //            (sel == 2'd2) ? i_vga_checker.B :
-  //            i_vga_ring.B;
 
   vga_checker i_vga_checker (
       .ui_in,
@@ -146,6 +162,18 @@ module tt_um_lkhanh_vga_trng (
       .R(r_gamepad),
       .G(g_gamepad),
       .B(b_gamepad)
+  );
+
+  ring_oscillator #(
+      .DEPTH(3)
+  ) i_ring_oscillator_0 (
+      .bit_o(ro_o[0])
+  );
+
+  ring_oscillator #(
+      .DEPTH(5)
+  ) i_ring_oscillator_1 (
+      .bit_o(ro_o[1])
   );
 
 endmodule
