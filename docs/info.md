@@ -9,7 +9,7 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Use TRNG to select between 4 VGA projects
+Select between 4 VGA projects. Can use TRNG (from sampling ring oscillator) to randomly select.
 
 ## How to test
 

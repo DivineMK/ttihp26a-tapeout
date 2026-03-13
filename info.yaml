@@ -36,7 +36,7 @@ pinout:
   ui[4]: ""
   ui[5]: ""
   ui[6]: ""
-  ui[7]: ""
+  ui[7]: "rand"
 
   # Outputs
   uo[0]: "R1"
