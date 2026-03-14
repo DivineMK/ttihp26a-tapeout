@@ -7,34 +7,46 @@
 
 module vga_stripe (
     input wire [1:0] ui_in,
-    input wire vsync,
-    input wire rst_n,
-
     input wire video_active,
     input wire [9:0] pix_x,
     input wire [9:0] pix_y,
+
+    input wire clk,
+    input wire vsync,
+    input wire rst_n,
 
     output wire [1:0] R,
     output wire [1:0] G,
     output wire [1:0] B
 );
 
-  reg [9:0] counter;
-  wire [9:0] moving_x = pix_x + counter;
+  wire direction = ui_in[1];
+  wire [1:0] speed;
+  assign speed = ui_in[0] ? 2'd3 : 2'd1;
+
+  reg [9:0] counter_d, counter_q;
+  reg vsync_q;
+
+  always @(*) begin
+    counter_d = counter_q;
+    if (vsync_q && !vsync) begin
+      counter_d = direction ? counter_d + speed : counter_d - speed;
+    end
+  end
+
+  wire [9:0] moving_x = pix_x + counter_q;
 
   assign R = video_active ? {moving_x[5], pix_y[2]} : 2'b00;
   assign G = video_active ? {moving_x[6], pix_y[2]} : 2'b00;
   assign B = video_active ? {moving_x[7], pix_y[5]} : 2'b00;
 
-  wire direction = ui_in[1];
-  wire [1:0] speed;
-  assign speed = ui_in[0] ? 2'd3 : 2'd1;
-
-  always @(posedge vsync, negedge rst_n) begin
+  always @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-      counter <= 0;
+      counter_q <= 0;
+      vsync_q   <= 0;
     end else begin
-      counter <= direction ? counter + speed : counter - speed;
+      vsync_q   <= vsync;
+      counter_q <= counter_d;
     end
   end
 

@@ -181,7 +181,7 @@ module vga_gamepad (
   reg [1:0] b_out;
   assign {R, G, B} = {r_out, g_out, b_out};
   // RGB output logic
-  always @(posedge clk) begin
+  always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
       r_out <= 0;
       g_out <= 0;

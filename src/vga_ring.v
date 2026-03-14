@@ -61,6 +61,6 @@ module vga_ring (
   end
 
   // Unused inputs
-  // wire _unused = &{ena, uio_in, ui_in[7:2], radius[9:8], frame[9:7], min_d[0], anim_radius[3:0], 1'b0};
+  wire _unused = &{radius[9:8], frame[9:7], min_d[0], anim_radius[3:0]};
 
 endmodule

@@ -67,18 +67,16 @@ module tt_um_lkhanh_vga_trng (
 
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-      ro_sample[0] <= 1'b0;
-      ro_sample[1] <= 1'b0;
+      ro_sample <= 2'b01;
       rand_sel <= 2'b00;
       rand_q <= 1'b0;
     end else begin
-      ro_sample[0] <= ro_o[0];
-      ro_sample[1] <= ro_o[1];
+      ro_sample <= (ro_o == 2'b0) ? ro_sample : ro_o;  // avoid no change
       rand_q <= rand_d;
 
       // Sample on rising edge of ui_in[7]
       if (rand_q && !rand_d) begin
-          rand_sel <= rand_sel + ro_sample;
+        rand_sel <= rand_sel + ro_sample;
       end
     end
   end
@@ -118,6 +116,7 @@ module tt_um_lkhanh_vga_trng (
       .pix_x,
       .pix_y,
 
+      .clk,
       .rst_n,
       .video_active,
       .vsync,
@@ -144,6 +143,7 @@ module tt_um_lkhanh_vga_trng (
       .pix_x,
       .pix_y,
 
+      .clk,
       .rst_n,
       .video_active,
       .vsync,
@@ -164,16 +164,8 @@ module tt_um_lkhanh_vga_trng (
       .B(b_gamepad)
   );
 
-  ring_oscillator #(
-      .DEPTH(3)
-  ) i_ring_oscillator_0 (
-      .bit_o(ro_o[0])
-  );
+  ring_oscillator #(.DEPTH(3)) i_ring_oscillator_0 (.bit_o(ro_o[0]));
 
-  ring_oscillator #(
-      .DEPTH(5)
-  ) i_ring_oscillator_1 (
-      .bit_o(ro_o[1])
-  );
+  ring_oscillator #(.DEPTH(5)) i_ring_oscillator_1 (.bit_o(ro_o[1]));
 
 endmodule

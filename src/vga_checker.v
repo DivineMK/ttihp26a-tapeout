@@ -11,6 +11,7 @@ module vga_checker (
     input wire [9:0] pix_x,
     input wire [9:0] pix_y,
 
+    input wire clk,
     input wire rst_n,
     input wire vsync,
     input wire video_active,
@@ -20,35 +21,45 @@ module vga_checker (
     output wire [1:0] B
 );
   // increase counter every frame (vsync happens once per frame)
-  reg [9:0] counter;
+  reg [9:0] counter_d, counter_q;
 
   wire [1:0] speed;
   assign speed = ui_in[0] ? 2'd3 : 2'd0;
   wire direction = ui_in[1];
+  reg  vsync_q;
 
-  always @(posedge vsync, negedge rst_n) begin
+  always @(*) begin
+    counter_d = counter_q;
+    if (vsync_q && !vsync) begin
+      counter_d = direction ? counter_d + speed : counter_d - speed;
+    end
+  end
+
+  always @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-      counter <= 0;
+      counter_q <= 0;
+      vsync_q   <= 0;
     end else begin
-      counter <= direction ? counter + speed : counter - speed;
+      vsync_q   <= vsync;
+      counter_q <= counter_d;
     end
   end
 
   // animate layers
-  wire [9:0] layer_a_x = pix_x + counter * 16;
-  wire [9:0] layer_a_y = pix_y + counter * 2;
+  wire [9:0] layer_a_x = pix_x + counter_q * 16;
+  wire [9:0] layer_a_y = pix_y + counter_q * 2;
 
-  wire [9:0] layer_b_x = pix_x + counter * 7;
-  wire [9:0] layer_b_y = pix_y + counter + counter / 2;
+  wire [9:0] layer_b_x = pix_x + counter_q * 7;
+  wire [9:0] layer_b_y = pix_y + counter_q + counter_q / 2;
 
-  wire [9:0] layer_c_x = pix_x + counter * 4;
-  wire [9:0] layer_c_y = pix_y + counter / 2;
+  wire [9:0] layer_c_x = pix_x + counter_q * 4;
+  wire [9:0] layer_c_y = pix_y + counter_q / 2;
 
-  wire [9:0] layer_d_x = pix_x + counter * 2;
-  wire [9:0] layer_d_y = pix_y + counter / 4;
+  wire [9:0] layer_d_x = pix_x + counter_q * 2;
+  wire [9:0] layer_d_y = pix_y + counter_q / 4;
 
-  wire [9:0] layer_e_x = pix_x + counter / 2;
-  wire [9:0] layer_e_y = pix_y + counter / 6;
+  wire [9:0] layer_e_x = pix_x + counter_q / 2;
+  wire [9:0] layer_e_y = pix_y + counter_q / 6;
 
   //                    checker shape          * transparency using pixel dithering
   wire layer_a = (layer_a_x[8] ^ layer_a_y[8]) & (pix_y[1] ^ pix_x[0]);
